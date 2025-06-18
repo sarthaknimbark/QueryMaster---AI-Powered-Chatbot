@@ -4,11 +4,9 @@ import { hash, compare } from "bcrypt";
 import { createToken } from "../utils/tocken-manager.js";
 import { COOKIE_NAME } from "../utils/constant.js";
 
-export const getAllUsers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const isProduction = process.env.NODE_ENV === "production";
+
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await User.find();
     return res.status(200).json({ message: "OK", users });
@@ -19,11 +17,7 @@ export const getAllUsers = async (
   }
 };
 
-export const userSignup = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const userSignup = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
@@ -35,9 +29,10 @@ export const userSignup = async (
 
     res.clearCookie(COOKIE_NAME, {
       httpOnly: true,
-      domain: "localhost",
       signed: true,
       path: "/",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
     const token = createToken(user._id.toString(), user.email, "7d");
@@ -46,15 +41,14 @@ export const userSignup = async (
 
     res.cookie(COOKIE_NAME, token, {
       path: "/",
-      domain: "localhost",
       expires,
       httpOnly: true,
       signed: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
-    return res
-      .status(201)
-      .json({ message: "OK", name: user.name, email: user.email });
+    return res.status(201).json({ message: "OK", name: user.name, email: user.email });
   } catch (error: unknown) {
     const err = error as Error;
     console.error(err.message);
@@ -62,11 +56,7 @@ export const userSignup = async (
   }
 };
 
-export const userLogin = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const userLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -77,9 +67,10 @@ export const userLogin = async (
 
     res.clearCookie(COOKIE_NAME, {
       httpOnly: true,
-      domain: "localhost",
       signed: true,
       path: "/",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
     const token = createToken(user._id.toString(), user.email, "365d");
@@ -88,15 +79,14 @@ export const userLogin = async (
 
     res.cookie(COOKIE_NAME, token, {
       path: "/",
-      domain: "localhost",
       expires,
       httpOnly: true,
       signed: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
-    return res
-      .status(200)
-      .json({ message: "OK", name: user.name, email: user.email });
+    return res.status(200).json({ message: "OK", name: user.name, email: user.email });
   } catch (error: unknown) {
     const err = error as Error;
     console.error(err.message);
@@ -104,20 +94,14 @@ export const userLogin = async (
   }
 };
 
-export const verifyUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const verifyUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) return res.status(401).send("User not registered OR Token malfunctioned");
     if (user._id.toString() !== res.locals.jwtData.id)
       return res.status(401).send("Permissions didn't match");
 
-    return res
-      .status(200)
-      .json({ message: "OK", name: user.name, email: user.email });
+    return res.status(200).json({ message: "OK", name: user.name, email: user.email });
   } catch (error: unknown) {
     const err = error as Error;
     console.error(err.message);
@@ -125,11 +109,7 @@ export const verifyUser = async (
   }
 };
 
-export const userLogout = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const userLogout = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) return res.status(401).send("User not registered OR Token malfunctioned");
@@ -138,14 +118,13 @@ export const userLogout = async (
 
     res.clearCookie(COOKIE_NAME, {
       httpOnly: true,
-      domain: "localhost",
       signed: true,
       path: "/",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
-    return res
-      .status(200)
-      .json({ message: "OK", name: user.name, email: user.email });
+    return res.status(200).json({ message: "OK", name: user.name, email: user.email });
   } catch (error: unknown) {
     const err = error as Error;
     console.error(err.message);
