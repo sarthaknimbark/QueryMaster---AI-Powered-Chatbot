@@ -11,27 +11,36 @@ config();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// Logger (remove in production if needed)
+// Logger (disable in prod if needed)
 app.use(morgan("dev"));
 
-// Routes
+// API routes
 app.use("/api/v1", appRouter);
 
-// -------------------------
+// ==============================
 // Serve React frontend in production
-// -------------------------
+// ==============================
+
+// Handle __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files from frontend/build
-app.use(express.static(path.join(__dirname, "../../frontend/build")));
+// Absolute path to React build
+const clientBuildPath = path.resolve(__dirname, "../../frontend/build");
 
+// Serve static files from React
+app.use(express.static(clientBuildPath));
+
+// All other routes → React index.html
 app.get("*", (_, res) => {
-  res.sendFile(path.join(__dirname, "../../frontend/build/index.html"));
+  res.sendFile(path.join(clientBuildPath, "index.html"));
 });
 
 export default app;
