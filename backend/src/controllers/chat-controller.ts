@@ -41,9 +41,10 @@ export const generateChatCompletion = async (
 
     return res.status(200).json({ chats: user.chats });
 
-  } catch (error) {
-    console.error("Error in generateChatCompletion:", error);
-    return res.status(500).json({ message: "Internal Server Error", error: error.toString() });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Error in generateChatCompletion:", err.message);
+    return res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
 
@@ -61,9 +62,10 @@ export const sendChatsToUser = async (
       return res.status(401).send("Permissions didn't match");
     }
     return res.status(200).json({ message: "OK", chats: user.chats });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "ERROR", cause: error.message });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Error in sendChatsToUser:", err.message);
+    return res.status(500).json({ message: "ERROR", cause: err.message });
   }
 };
 
@@ -73,7 +75,6 @@ export const deleteChats = async (
   next: NextFunction
 ) => {
   try {
-    // User token check
     const user = await User.findById(res.locals.jwtData.id);
     if (!user) {
       return res.status(401).send("User not registered OR Token malfunctioned");
@@ -82,12 +83,14 @@ export const deleteChats = async (
       return res.status(401).send("Permissions didn't match");
     }
 
-   // user.chats = [];
+    // Uncomment if you want to actually clear chats
+    // user.chats = [];
     await user.save();
 
     return res.status(200).json({ message: "OK" });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "ERROR", cause: error.message });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Error in deleteChats:", err.message);
+    return res.status(500).json({ message: "ERROR", cause: err.message });
   }
 };

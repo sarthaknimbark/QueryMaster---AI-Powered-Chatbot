@@ -2,18 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { COOKIE_NAME } from "./constant.js";
 
-// ✅ Ensure JWT_SECRET is defined
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("❌ JWT_SECRET is not defined in environment variables.");
-}
-
 export const createToken = (id: string, email: string, expiresIn: string) => {
-  const payload = { id, email };
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error("❌ JWT_SECRET is not defined in environment variables.");
+  }
 
-  // ✅ Use the validated JWT_SECRET
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn });
-  return token;
+  const payload = { id, email };
+  return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
 
 export const verifyToken = async (
@@ -21,10 +17,15 @@ export const verifyToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.signedCookies[`${COOKIE_NAME}`];
+  const token = req.signedCookies[COOKIE_NAME];
 
   if (!token || token.trim() === "") {
     return res.status(401).json({ message: "Token Not Received" });
+  }
+
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    return res.status(500).json({ message: "JWT secret not configured." });
   }
 
   try {
