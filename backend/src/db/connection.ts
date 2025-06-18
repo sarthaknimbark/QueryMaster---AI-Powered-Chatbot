@@ -1,24 +1,28 @@
-import { connect, disconnect } from "mongoose";
+import mongoose from "mongoose";
 
-export default async function connectToDatabase() {
-    try{
-        await connect(process.env.MONGODB_URL, {
-            //useNewUrlParser: true, 
-            //useUnifiedTopology: true
-        });
-    } catch (error) {
-        console.log(error);
-        throw new Error("Can Not Connect To MONGODB")
-    }
+const MONGODB_URL = process.env.MONGODB_URL;
+if (!MONGODB_URL) {
+  throw new Error("❌ MONGODB_URL is not defined in environment variables.");
 }
 
-async function disconnectToDatabase() {
-    try {
-        await disconnect();
-    } catch (error) {
-        console.log(error);
-        throw new Error("Can Not Connect To MONGODB.")
-    }
-}
+export const connectToDatabase = async () => {
+  try {
+    await mongoose.connect(MONGODB_URL);
+    console.log("✅ Connected to MongoDB");
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("❌ MongoDB Connection Error:", err.message);
+    throw err;
+  }
+};
 
-export {connectToDatabase, disconnectToDatabase}
+export const disconnectToDatabase = async () => {
+  try {
+    await mongoose.disconnect();
+    console.log("✅ Disconnected from MongoDB");
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("❌ MongoDB Disconnection Error:", err.message);
+    throw err;
+  }
+};
